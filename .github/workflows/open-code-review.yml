@@ -1,0 +1,37 @@
+name: Open Code Review
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to review
+        required: true
+        type: string
+      llm_model:
+        description: Optional model override; empty uses the OCR_LLM_MODEL repository variable
+        required: false
+        type: string
+        default: ""
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  review:
+    uses: siedlegroup/sgc-workflow-templates/.github/workflows/open_code_review.yml@81a86ae1a331029b7406386e2164621ac4f0933a
+    with:
+      pr_number: ${{ inputs.pr_number }}
+      llm_model: ${{ inputs.llm_model || vars.OCR_LLM_MODEL }}
+      llm_use_anthropic: ${{ vars.OCR_LLM_USE_ANTHROPIC }}
+      llm_endpoint: ${{ vars.OCR_LLM_URL }}
+      # OCR needs Node.js and access to the cluster-private LLM endpoint.
+      runner: runner-scale-set-copilot
+      skip_drafts: true
+    secrets:
+      llm_auth_token: ${{ secrets.OCR_LLM_AUTH_TOKEN }}
